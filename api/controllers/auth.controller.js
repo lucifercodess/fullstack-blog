@@ -19,7 +19,7 @@ export const signup = async(req,res)=>{
     return res.status(200).json({code:1,message: "user created successfully"})
   } catch (error) {
     console.log(error)
-    return res.status(500).json({code:0,message: "error in signup controller"});
+    return res.status(500).json({code:0,errorMessage: "error in signup controller"});
   }
 
 }
