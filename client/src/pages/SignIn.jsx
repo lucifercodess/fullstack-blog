@@ -1,107 +1,115 @@
-import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
-import React, { useState } from "react";
-import toast from "react-hot-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { Alert, Button, Label, Spinner, TextInput } from 'flowbite-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  signInStart,
+  signInSuccess,
+  signInFailure,
+} from '../redux/user/userSlice';
+import toast from 'react-hot-toast';
 
-const SignIn = () => {
-  const [formdata, setformdata] = useState({});
-  const [error, setError] = useState(null);
-  const [Loading, setLoading] = useState(false);
+export default function SignIn() {
+  const [formData, setFormData] = useState({});
+  const { loading, error: errorMessage } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const handleChange = (e) => {
-    setformdata({ ...formdata, [e.target.id]: e.target.value.trim() });
-    // console.log(formdata)
+    setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.email || !formData.password) {
+      return dispatch(signInFailure('Please fill all the fields'));
+    }
     try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch("http://localhost:4009/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formdata), // sends the form data as a string
+      dispatch(signInStart());
+      const res = await fetch('http://localhost:4009/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if (data.code === 0) {
-        return setError(data.errorMessage);
+      if (data.code  === 0) {
+        dispatch(signInFailure(data.errorMessage));
       }
-      setLoading(false);
-      console.log(data);
-      toast.success(data.message);
-      navigate("/");
+
+      if (res.ok) {
+        dispatch(signInSuccess(data));
+        toast.success(data.message);
+        navigate('/');
+      }
     } catch (error) {
-      toast.error(error.message);
-      console.log(error);
+      dispatch(signInFailure(error.message));
     }
   };
   return (
-    <div className="min-h-screen mt-20 ">
-      <div className="flex p-3 max-w-3xl mx-auto gap-5">
-        {/* left side */}
-        <div className="flex-1">
-          <Link to={"/"} className="text-4xl font-bold dark:text-white">
-            <span className="px-2 py-1 bg-gradient-to-r from-gray-500 via-blue-500 to-pink-500 rounded-lg text-white">
+    <div className='min-h-screen mt-20'>
+      <div className='flex p-3 max-w-3xl mx-auto flex-col md:flex-row md:items-center gap-5'>
+        {/* left */}
+        <div className='flex-1'>
+          <Link to='/' className='font-bold dark:text-white text-4xl'>
+            <span className='px-2 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg text-white'>
               Ayush's
             </span>
-            blog
+            Blog
           </Link>
-          <p className="text-sm mt-5">
-            This is a Blog Website. you can signup using your email and
-            password, you can also signup with google{" "}
+          <p className='text-sm mt-5'>
+            This is a demo project. You can sign in with your email and password
+            or with Google.
           </p>
         </div>
-        {/* right side */}
-        <div className="flex-1">
-          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            
+        {/* right */}
+
+        <div className='flex-1'>
+          <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
             <div>
-              <Label value="your email" />
+              <Label value='Your email' />
               <TextInput
-                type="email"
-                placeholder="email"
-                id="email"
+                type='email'
+                placeholder='name@company.com'
+                id='email'
                 onChange={handleChange}
               />
             </div>
             <div>
-              <Label value="your password" />
+              <Label value='Your password' />
               <TextInput
-                type="password"
-                placeholder="password"
-                id="password"
+                type='password'
+                placeholder='**********'
+                id='password'
                 onChange={handleChange}
               />
             </div>
             <Button
-              gradientDuoTone="purpleToPink"
-              type="submit"
-              disabled={Loading}
+              gradientDuoTone='purpleToPink'
+              type='submit'
+              disabled={loading}
             >
-              {Loading ? (
+              {loading ? (
                 <>
-                  <Spinner size="sm" /> <span>Loading...</span>
+                  <Spinner size='sm' />
+                  <span className='pl-3'>Loading...</span>
                 </>
               ) : (
-                "sign up"
+                'Sign In'
               )}
             </Button>
+            
           </form>
-          <div className="mt-4 flex gap-2">
-            <p>Don't have an Account?</p>
-            <Link to="/sign-up" className="text-blue-600">
+          <div className='flex gap-2 text-sm mt-5'>
+            <span>Dont Have an account?</span>
+            <Link to='/sign-up' className='text-blue-500'>
               Sign Up
             </Link>
           </div>
-          {error && (
-            <Alert type="error" color="failure">
-              {error}
+          {errorMessage && (
+            <Alert className='mt-5' color='failure'>
+              {errorMessage}
             </Alert>
           )}
         </div>
       </div>
     </div>
   );
-};
-
-export default SignIn;
+}
